@@ -23,7 +23,7 @@ class BorrowSeeder extends Seeder
                 Borrow::factory($copies)->create([
                     'copy_id' => $copies->id,
                     'user_id' => $users->id,
-                    'deadline' => now()->addDay(15),
+                    'deadline' => now()->addDay(15)
                 ]);
             }
         }
