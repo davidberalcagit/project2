@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 /**
  * @extends Factory<Model>
  */
-class BookFactory extends Factory
+class ReserveFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -18,11 +18,6 @@ class BookFactory extends Factory
     public function definition(): array
     {
         return [
-            'title' => fake()->sentence(),
-            'editorial' => fake()->company(),
-            'year' => fake()->year(),
-            'edition' => '1º',
-            'isbn' => fake()->isbn13()
         ];
     }
 }

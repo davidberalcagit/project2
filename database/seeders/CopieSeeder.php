@@ -16,17 +16,13 @@ class CopieSeeder extends Seeder
     public function run(): void
     {
         $book = Book::all();
-        $librarie = Library::all();
-
         foreach ($book as $books) {
-            foreach ($librarie as $libraries) {
-
-                Copie::factory()->create([
+            $librarie = Library::inRandomOrder()->first();
+            Copie::create([
                     'book_id' => $books->id,
-                    'library_id' => $libraries->id,
-                    'barcode' => random_int(20, 100000) . $book->id,
+                    'library_id' => $librarie->id,
+                    'barcode' => random_int(20, 100000) . $books->id,
                 ]);
             }
         }
-    }
 }
