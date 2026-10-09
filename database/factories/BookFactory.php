@@ -18,6 +18,11 @@ class BookFactory extends Factory
     public function definition(): array
     {
         return [
+            'title' => fake()->sentence(),
+            'editorial' => fake()->company(),
+            'year' => fake()->year(),
+            'edition' => '1º',
+            'isbn' => fake()->isbn13()
         ];
     }
 }

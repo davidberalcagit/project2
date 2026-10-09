@@ -17,15 +17,13 @@ class BorrowSeeder extends Seeder
     public function run(): void
     {
         $copie = Copie::all();
-        $user = User::all();
         foreach ($copie as $copies) {
-            foreach ($user as $users) {
-                Borrow::factory($copies)->create([
-                    'copy_id' => $copies->id,
-                    'user_id' => $users->id,
-                    'deadline' => now()->addDay(15)
-                ]);
-            }
+            $user = User::inRandomOrder()->first();
+            Borrow::create([
+                'copy_id' => $copies->id,
+                'user_id' => $user->id,
+                'deadline' => now()->addDays(15)
+            ]);
         }
-    }
+        }
 }

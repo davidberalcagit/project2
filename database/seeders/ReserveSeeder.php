@@ -5,11 +5,12 @@ namespace Database\Seeders;
 use App\Models\Book;
 use App\Models\Borrow;
 use App\Models\Copie;
+use App\Models\Reserve;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
-class BorrowSeeder extends Seeder
+class ReserveSeeder extends Seeder
 {
     /**
      * Run the database seeds.
@@ -17,15 +18,12 @@ class BorrowSeeder extends Seeder
     public function run(): void
     {
         $copie = Copie::all();
-        $user = User::all();
         foreach ($copie as $copies) {
-            foreach ($user as $users) {
-                Borrow::factory($copies)->create([
+            $user = User::inRandomOrder()->first();
+            Reserve::create([
                     'copy_id' => $copies->id,
-                    'user_id' => $users->id,
-                    'deadline' => now()->addDay(15)
+                    'user_id' => $user->id,
                 ]);
             }
         }
-    }
 }

@@ -7,4 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class Borrow extends Model
 {
     use HasFactory;
+
+    public static function create(array $array)
+    {
+    }
 }

@@ -20,7 +20,6 @@ class LibrarySeeder extends Seeder
             Library::factory()->create([
                 'name' => fake()->name,
                 'location' => fake()->city(),
-
             ]);
         }
     }

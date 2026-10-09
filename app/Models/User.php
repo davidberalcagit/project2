@@ -29,4 +29,19 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+    /**
+     * Relación: Un usuario puede tener muchas reservas.
+     */
+    public function reserves()
+    {
+        return $this->hasMany(Reserve::class);
+    }
+
+    /**
+     * Relación adicional (por si también usas préstamos o borrows):
+     */
+    public function borrows()
+    {
+        return $this->hasMany(Borrow::class);
+    }
 }
