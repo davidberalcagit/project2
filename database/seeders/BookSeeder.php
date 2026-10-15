@@ -2,8 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Author;
 use App\Models\Book;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Category;
 use Illuminate\Database\Seeder;
 
 class BookSeeder extends Seeder
@@ -13,13 +14,6 @@ class BookSeeder extends Seeder
      */
     public function run(): void
     {
-        Book::create([
-            'title' => 'Proyecto Hail Mary',
-            'editorial' => 'Editorial Nova',
-            'year' => '2021',
-            'edition' => '1º',
-            'isbn' => '978841803718'
-        ]);
-        Book::factory(5)->create();
+        Book::factory(10)->create();
     }
 }

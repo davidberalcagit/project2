@@ -2,11 +2,13 @@
 
 namespace Database\Factories;
 
-use App\Models\Book;
+use App\Models\Borrow;
+use App\Models\Copie;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Model>
+ * @extends Factory<Borrow>
  */
 class BorrowFactory extends Factory
 {
@@ -18,6 +20,9 @@ class BorrowFactory extends Factory
     public function definition(): array
     {
         return [
+            'user_id' => User::factory(),
+            'copy_id' => Copie::factory(),
+            'deadline' => fake()->dateTimeBetween('+1 week', '+1 month')->format('Y-m-d'),
         ];
     }
 }

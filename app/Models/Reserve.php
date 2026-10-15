@@ -4,33 +4,23 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Reserve extends Model
 {
     use HasFactory;
 
-    /**
-     * ID de las relaciones.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'copy_id',
         'user_id',
     ];
 
-    /**
-     * Relación: Una reserva pertenece a un usuario.
-     */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Relación: Una reserva pertenece a una copia (ejemplar físico).
-     */
-    public function copy()
+    public function copy(): BelongsTo
     {
         return $this->belongsTo(Copie::class, 'copy_id');
     }

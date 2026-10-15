@@ -2,11 +2,13 @@
 
 namespace Database\Factories;
 
-use App\Models\Book;
+use App\Models\Copie;
+use App\Models\Reserve;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<Model>
+ * @extends Factory<Reserve>
  */
 class ReserveFactory extends Factory
 {
@@ -18,6 +20,8 @@ class ReserveFactory extends Factory
     public function definition(): array
     {
         return [
+            'user_id' => User::factory(),
+            'copy_id' => Copie::factory(),
         ];
     }
 }

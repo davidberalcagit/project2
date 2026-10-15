@@ -2,7 +2,6 @@
 
 namespace Database\Factories;
 
-use App\Models\Library;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
@@ -18,6 +17,8 @@ class LibraryFactory extends Factory
     public function definition(): array
     {
         return [
+            'name' => fake()->company().' Library',
+            'location' => fake()->city(),
         ];
     }
 }

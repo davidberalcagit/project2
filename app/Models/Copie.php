@@ -4,52 +4,46 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Copie extends Model
 {
     use HasFactory;
 
-    /**
-     * Los atributos que se pueden asignar masivamente.
-     *
-     * @var array<int, string>
-     */
+    protected $table = 'copies';
+
     protected $fillable = [
         'book_id',
         'library_id',
         'barcode',
-        'status',
     ];
 
-    /**
-     * Relación: Una copia pertenece a un libro.
-     */
-    public function book()
+    public function book(): BelongsTo
     {
         return $this->belongsTo(Book::class);
     }
 
-    /**
-     * Relación: Una copia pertenece a una librería.
-     */
-    public function library()
+    public function library(): BelongsTo
     {
         return $this->belongsTo(Library::class);
     }
 
-    /**
-     * Relación: Una copia puede tener muchas reservas.
-     */
-    public function reserves()
+    public function reserves(): HasMany
     {
         return $this->hasMany(Reserve::class, 'copy_id');
     }
 
-    /**
-     * Relación: Una copia puede tener muchos préstamos (si usas borrows).
-     */
-    public function borrows()
+    public function borrows(): HasMany
     {
         return $this->hasMany(Borrow::class, 'copy_id');
+    }
+
+    public function borrowers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'borrows', 'copy_id', 'user_id')
+            ->withPivot('deadline')
+            ->withTimestamps();
     }
 }
