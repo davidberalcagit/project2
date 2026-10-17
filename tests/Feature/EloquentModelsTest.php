@@ -7,12 +7,15 @@ use App\Models\Category;
 use App\Models\Copie;
 use App\Models\Favorite;
 use App\Models\Library;
+use App\Models\Opinion;
 use App\Models\Reserve;
 use App\Models\User;
 use Database\Seeders\AuthorSeeder;
 use Database\Seeders\BookSeeder;
 use Database\Seeders\CategorySeeder;
 use Database\Seeders\FavoriteSeeder;
+use Database\Seeders\OpinionSeeder;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
 use Tests\TestCase;
 
@@ -82,6 +85,42 @@ it('creates books with category and author relationships using factories', funct
         ->and($book->author)->toBeInstanceOf(Author::class)
         ->and($book->category->books->modelKeys())->toBe([$book->id])
         ->and($book->author->books->modelKeys())->toBe([$book->id]);
+});
+
+it('rejects books with duplicate ISBNs', function () {
+    $book = Book::factory()->create(['isbn' => '9780000000001']);
+
+    expect(fn () => Book::factory()->create(['isbn' => $book->isbn]))
+        ->toThrow(QueryException::class);
+});
+
+it('rejects duplicate favorites for the same user and book', function () {
+    $user = User::factory()->create();
+    $book = Book::factory()->create();
+    Favorite::factory()->for($user)->for($book)->create();
+
+    expect(fn () => Favorite::factory()->for($user)->for($book)->create())
+        ->toThrow(QueryException::class);
+});
+
+it('associates opinions with their book and user', function () {
+    $opinion = Opinion::factory()->create([
+        'rating' => 4,
+        'comment' => 'Muy recomendable.',
+    ]);
+
+    expect($opinion->rating)->toBe(4)
+        ->and($opinion->comment)->toBe('Muy recomendable.')
+        ->and($opinion->user->opinions->modelKeys())->toBe([$opinion->id])
+        ->and($opinion->book->opinions->modelKeys())->toBe([$opinion->id]);
+});
+
+it('seeds five opinions', function () {
+    $existingOpinions = Opinion::count();
+
+    $this->seed(OpinionSeeder::class);
+
+    $this->assertDatabaseCount('opinions', $existingOpinions + 5);
 });
 
 it('seeds categories, authors, books, and favorites', function () {

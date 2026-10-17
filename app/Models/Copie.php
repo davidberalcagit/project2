@@ -18,6 +18,7 @@ class Copie extends Model
         'book_id',
         'library_id',
         'barcode',
+        'copy_status_id',
     ];
 
     public function book(): BelongsTo
@@ -28,6 +29,11 @@ class Copie extends Model
     public function library(): BelongsTo
     {
         return $this->belongsTo(Library::class);
+    }
+
+    public function copyStatus(): BelongsTo
+    {
+        return $this->belongsTo(CopyStatus::class);
     }
 
     public function reserves(): HasMany

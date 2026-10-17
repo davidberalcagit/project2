@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Book;
-use App\Models\Favorite;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 
@@ -14,6 +13,7 @@ class FavoriteSeeder extends Seeder
      */
     public function run(): void
     {
-        Favorite::factory()->create();
+        $bookIds = Book::query()->pluck('id');
+        User::query()->each(fn (User $user) => $user->favoriteBooks()->syncWithoutDetaching($bookIds));
     }
 }

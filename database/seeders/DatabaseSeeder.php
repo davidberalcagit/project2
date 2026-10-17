@@ -25,10 +25,12 @@ class DatabaseSeeder extends Seeder
         $this->call([AuthorSeeder::class]);
         $this->call([BookSeeder::class]);
         $this->call([LibrarySeeder::class]);
+        $this->call([CopyStatusSeeder::class]);
         $this->call([CopieSeeder::class]);
         $this->call([BorrowSeeder::class]);
         $this->call([ReserveSeeder::class]);
         $this->call([FavoriteSeeder::class]);
+        $this->call([OpinionSeeder::class]);
 
     }
 }
