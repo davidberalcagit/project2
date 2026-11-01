@@ -19,4 +19,9 @@ class Library extends Model
     {
         return $this->hasMany(Copie::class, 'library_id');
     }
+
+    public function users(): HasMany
+    {
+        return $this->hasMany(User::class);
+    }
 }

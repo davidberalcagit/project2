@@ -14,6 +14,7 @@ class Borrow extends Model
         'user_id',
         'copy_id',
         'deadline',
+        'borrow_status_id',
     ];
 
     protected function casts(): array
@@ -31,5 +32,10 @@ class Borrow extends Model
     public function copy(): BelongsTo
     {
         return $this->belongsTo(Copie::class, 'copy_id');
+    }
+
+    public function borrowStatus(): BelongsTo
+    {
+        return $this->belongsTo(BorrowStatus::class);
     }
 }

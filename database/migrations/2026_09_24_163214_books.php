@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('title');
             $table->string('editorial');
-            $table->integer('year');
+            $table->date('publication_date');
             $table->string('edition');
             $table->string('isbn');
             $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();

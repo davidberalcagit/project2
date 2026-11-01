@@ -7,17 +7,31 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 #[Fillable(['name', 'email', 'password'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, HasRoles, Notifiable;
+
+    protected $fillable = [
+        'request_type',
+        'requested_library_id',
+        'proposed_library_name',
+        'proposed_library_location',
+        'status',
+        'password',
+        'email',
+        'name',
+    ];
 
     /**
      * Get the attributes that should be cast.
@@ -60,6 +74,16 @@ class User extends Authenticatable
     public function opinions(): HasMany
     {
         return $this->hasMany(Opinion::class);
+    }
+
+    public function librarianAccessRequest(): HasOne
+    {
+        return $this->hasOne(LibrarianAccessRequest::class);
+    }
+
+    public function library(): BelongsTo
+    {
+        return $this->belongsTo(Library::class);
     }
 
     public function favoriteBooks(): BelongsToMany
