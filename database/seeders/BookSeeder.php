@@ -15,7 +15,7 @@ class BookSeeder extends Seeder
     public function run(): void
     {
         // Reutiliza registros existentes para no crear categorías ni autores adicionales.
-        Book::factory(6)->recycle(Category::all())->recycle(Author::all())->create();
+        Book::factory(10)->recycle(Category::all())->recycle(Author::all())->create();
 
         // Deja cuatro libros sin relaciones con categorías ni autores.
         Book::factory(4)->create(['category_id' => null, 'author_id' => null]);

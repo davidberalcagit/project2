@@ -22,7 +22,7 @@ class BookFactory extends Factory
         return [
             'title' => fake()->sentence(),
             'editorial' => fake()->company(),
-            'year' => fake()->year(),
+            'publication_date' => fake()->date(),
             'edition' => '1º',
             'isbn' => fake()->unique()->isbn13(),
             'category_id' => Category::factory(), // Crea una nueva categoría si no existe una relacionada

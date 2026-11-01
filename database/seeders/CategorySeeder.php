@@ -12,6 +12,22 @@ class CategorySeeder extends Seeder
      */
     public function run(): void
     {
-        Category::factory(8)->create();
+        $categories = [
+            'Fantasía',
+            'Ciencia ficción',
+            'Misterio',
+            'Romance',
+            'Terror',
+            'Aventura',
+            'Drama',
+            'Historia',
+        ];
+
+        foreach ($categories as $name) {
+            Category::query()->firstOrCreate(
+                ['name' => $name],
+                ['description' => "Libros de {$name}."]
+            );
+        }
     }
 }

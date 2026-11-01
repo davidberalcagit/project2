@@ -15,7 +15,7 @@ class Book extends Model
     protected $fillable = [
         'title',
         'editorial',
-        'year',
+        'publication_date',
         'edition',
         'isbn',
         'category_id',
@@ -25,7 +25,7 @@ class Book extends Model
     protected function casts(): array
     {
         return [
-            'year' => 'integer',
+            'publication_date' => 'date',
         ];
     }
 

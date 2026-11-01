@@ -25,7 +25,7 @@ it('connects books, copies, libraries, borrows, reserves, and users through thei
     $book = Book::create([
         'title' => 'Proyecto Hail Mary',
         'editorial' => 'Editorial Nova',
-        'year' => 2021,
+        'publication_date' => '2021-01-01',
         'edition' => '1',
         'isbn' => '978841803718',
     ]);
@@ -70,11 +70,11 @@ it('connects books, copies, libraries, borrows, reserves, and users through thei
         ->and($copy->borrowers->modelKeys())->toBe([$user->id]);
 });
 
-it('casts a book year to an integer and a borrow deadline to a date', function () {
-    $book = new Book(['year' => '2021']);
+it('casts a book publication date and a borrow deadline to dates', function () {
+    $book = new Book(['publication_date' => '2021-01-01']);
     $borrow = new Borrow(['deadline' => '2026-10-28']);
 
-    expect($book->year)->toBe(2021)
+    expect($book->publication_date->toDateString())->toBe('2021-01-01')
         ->and($borrow->deadline->toDateString())->toBe('2026-10-28');
 });
 
@@ -101,6 +101,20 @@ it('rejects duplicate favorites for the same user and book', function () {
 
     expect(fn () => Favorite::factory()->for($user)->for($book)->create())
         ->toThrow(QueryException::class);
+});
+
+it('creates categories with unique names through the factory', function () {
+    Category::factory(10)->create();
+
+    expect(Category::query()->distinct('name')->count('name'))->toBe(10);
+});
+
+it('seeds categories idempotently', function () {
+    $this->seed(CategorySeeder::class);
+    $this->seed(CategorySeeder::class);
+
+    expect(Category::query()->count())->toBe(8)
+        ->and(Category::query()->distinct('name')->count('name'))->toBe(8);
 });
 
 it('associates opinions with their book and user', function () {
@@ -138,8 +152,8 @@ it('seeds categories, authors, books, and favorites', function () {
 
     expect(Category::count())->toBe(8)
         ->and(Author::count())->toBe(8)
-        ->and(Book::whereNotNull('category_id')->count())->toBe(6)
-        ->and(Book::whereNotNull('author_id')->count())->toBe(6)
+        ->and(Book::whereNotNull('category_id')->count())->toBe(10)
+        ->and(Book::whereNotNull('author_id')->count())->toBe(10)
         ->and(Favorite::count())->toBe(User::count() * Book::count())
         ->and(User::first()->favoriteBooks->count())->toBe(Book::count());
 });
