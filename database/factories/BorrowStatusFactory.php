@@ -13,11 +13,9 @@ class BorrowStatusFactory extends Factory
     public static function supportedStatuses(): array
     {
         return [
-            'Available',
-            'Reserved',
-            'Borrowed',
-            'Expired',
-            'Unavailable',
+            'Active',
+            'Returned',
+            'Overdue',
         ];
     }
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\BookController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Librarian\BorrowController;
 use App\Http\Controllers\Librarian\CopyController;
 use App\Http\Controllers\Librarian\DashboardController as LibrarianDashboardController;
 use App\Http\Controllers\LibrarianAccessRequestController;
@@ -70,6 +71,10 @@ Route::middleware('auth')->group(function (): void {
             ->middleware('permission:manage-copies')
             ->name('librarian.copies.store');
     });
+
+    Route::post('/mi-biblioteca/prestamos/{borrow}/devolver', [BorrowController::class, 'complete'])
+        ->middleware('permission:complete-borrows')
+        ->name('librarian.borrows.complete');
 
     Route::get('/soporte', [SupportLibrarianAccessRequestController::class, 'index'])
         ->middleware('permission:access-support')

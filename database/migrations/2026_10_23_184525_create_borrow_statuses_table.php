@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        foreach (['Available', 'Reserved', 'Borrowed', 'Expired', 'Unavailable'] as $name) {
+        foreach (['Active', 'Returned', 'Overdue'] as $name) {
             DB::table('borrow_statuses')->insert([
                 'name' => $name,
                 'created_at' => now(),
@@ -26,11 +26,11 @@ return new class extends Migration
             ]);
         }
 
-        $borrowedStatusId = DB::table('borrow_statuses')->where('name', 'Borrowed')->value('id');
+        $activeStatusId = DB::table('borrow_statuses')->where('name', 'Active')->value('id');
 
-        Schema::table('borrows', function (Blueprint $table) use ($borrowedStatusId) {
+        Schema::table('borrows', function (Blueprint $table) use ($activeStatusId) {
             $table->foreignId('borrow_status_id')
-                ->default($borrowedStatusId)
+                ->default($activeStatusId)
                 ->constrained('borrow_statuses');
         });
     }

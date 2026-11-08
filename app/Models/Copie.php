@@ -5,12 +5,18 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Copie extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::created(function (Copie $copy): void {
+            $copy->syncAvailabilityStatus();
+        });
+    }
 
     protected $table = 'copies';
 
@@ -46,10 +52,24 @@ class Copie extends Model
         return $this->hasMany(Borrow::class, 'copy_id');
     }
 
-    public function borrowers(): BelongsToMany
+    public function syncAvailabilityStatus(): bool
     {
-        return $this->belongsToMany(User::class, 'borrows', 'copy_id', 'user_id')
-            ->withPivot('deadline')
-            ->withTimestamps();
+        $statusName = $this->borrows()->whereNull('returned_at')->exists()
+            ? 'Borrowed'
+            : ($this->reserves()
+                ->where('start_date', '<=', now())
+                ->where('expiration_date', '>', now())
+                ->exists() ? 'Reserved' : 'Available');
+
+        $statusId = CopyStatus::query()->firstOrCreate(['name' => $statusName])->getKey();
+
+        if ((int) $this->copy_status_id === (int) $statusId) {
+            return false;
+        }
+
+        $this->copy_status_id = $statusId;
+        $this->saveQuietly();
+
+        return true;
     }
 }

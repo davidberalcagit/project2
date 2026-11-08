@@ -3,9 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Book;
-use App\Models\Copie;
 use App\Models\Library;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class LibrarySeeder extends Seeder
@@ -15,8 +13,9 @@ class LibrarySeeder extends Seeder
      */
     public function run(): void
     {
-        $books = Book::all();
-        foreach ($books as $book) {
+        $libraryCount = Book::query()->count();
+
+        for ($libraryNumber = 0; $libraryNumber < $libraryCount; $libraryNumber++) {
             Library::factory()->create([
                 'name' => fake()->name,
                 'location' => fake()->city(),

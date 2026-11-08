@@ -17,7 +17,7 @@ class CopieSeeder extends Seeder
         Book::query()->each(function (Book $book): void {
             Copie::factory()
                 ->for($book)
-                ->for(Library::query()->inRandomOrder()->firstOrFail())
+                ->for(Library::query()->orderBy('id')->firstOrFail())
                 ->available()
                 ->create();
         });

@@ -17,7 +17,6 @@ class StoreCopyRequest extends FormRequest
         return [
             'book_id' => ['required', 'integer', 'exists:books,id'],
             'barcode' => ['required', 'string', 'max:255', 'unique:copies,barcode'],
-            'copy_status_id' => ['required', 'integer', 'exists:copy_statuses,id'],
         ];
     }
 }
