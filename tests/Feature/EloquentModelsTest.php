@@ -17,6 +17,7 @@ use Database\Seeders\FavoriteSeeder;
 use Database\Seeders\OpinionSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 uses(TestCase::class, LazilyRefreshDatabase::class);
@@ -38,6 +39,11 @@ it('connects books, copies, libraries, borrows, reserves, and users through thei
         'library_id' => $library->id,
         'barcode' => 'COPY-001',
     ]);
+    $reserveCopy = Copie::factory()
+        ->for($book)
+        ->for($library)
+        ->available()
+        ->create();
     $user = User::create([
         'name' => 'Ada Lovelace',
         'email' => 'ada@example.test',
@@ -46,28 +52,27 @@ it('connects books, copies, libraries, borrows, reserves, and users through thei
     $borrow = Borrow::create([
         'copy_id' => $copy->id,
         'user_id' => $user->id,
-        'deadline' => '2026-10-28',
+        'deadline' => '2026-11-28',
     ]);
     $reserve = Reserve::create([
-        'copy_id' => $copy->id,
+        'copy_id' => $reserveCopy->id,
         'user_id' => $user->id,
     ]);
 
-    expect($book->copies->modelKeys())->toBe([$copy->id])
-        ->and($library->copies->modelKeys())->toBe([$copy->id])
+    expect($book->copies->modelKeys())->toBe([$copy->id, $reserveCopy->id])
+        ->and($library->copies->modelKeys())->toBe([$copy->id, $reserveCopy->id])
         ->and($copy->book->is($book))->toBeTrue()
         ->and($copy->library->is($library))->toBeTrue()
         ->and($copy->borrows->modelKeys())->toBe([$borrow->id])
-        ->and($copy->reserves->modelKeys())->toBe([$reserve->id])
+        ->and($reserveCopy->reserves->modelKeys())->toBe([$reserve->id])
         ->and($borrow->copy->is($copy))->toBeTrue()
         ->and($borrow->user->is($user))->toBeTrue()
-        ->and($reserve->copy->is($copy))->toBeTrue()
+        ->and($reserve->copy->is($reserveCopy))->toBeTrue()
         ->and($reserve->user->is($user))->toBeTrue()
         ->and($user->borrows->modelKeys())->toBe([$borrow->id])
         ->and($user->reserves->modelKeys())->toBe([$reserve->id])
-        ->and($user->borrowedCopies->modelKeys())->toBe([$copy->id])
-        ->and($user->borrowedCopies->first()->pivot->getRawOriginal('deadline'))->toBe('2026-10-28 00:00:00')
-        ->and($copy->borrowers->modelKeys())->toBe([$user->id]);
+        ->and($user->borrows->first()->loaned_at)->not->toBeNull()
+        ->and($user->borrows->first()->returned_at)->toBeNull();
 });
 
 it('casts a book publication date and a borrow deadline to dates', function () {
@@ -128,6 +133,13 @@ it('associates opinions with their book and user', function () {
         ->and($opinion->user->opinions->modelKeys())->toBe([$opinion->id])
         ->and($opinion->book->opinions->modelKeys())->toBe([$opinion->id]);
 });
+
+it('rejects opinion ratings outside the range of one to five', function (int $rating) {
+    expect(fn () => Opinion::factory()->create(['rating' => $rating]))
+        ->toThrow(ValidationException::class);
+
+    $this->assertDatabaseCount('opinions', 0);
+})->with([0, 6]);
 
 it('seeds five opinions', function () {
     $existingOpinions = Opinion::count();

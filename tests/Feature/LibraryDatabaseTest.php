@@ -9,8 +9,14 @@ use App\Models\Favorite;
 use App\Models\Library;
 use App\Models\Reserve;
 use App\Models\User;
+use Database\Seeders\BorrowSeeder;
+use Database\Seeders\BorrowStatusSeeder;
+use Database\Seeders\CopieSeeder;
+use Database\Seeders\CopyStatusSeeder;
+use Database\Seeders\ReserveSeeder;
+use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
-use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 uses(TestCase::class, LazilyRefreshDatabase::class);
@@ -22,8 +28,9 @@ it('creates every library model with its factory and persists its required relat
     $book = Book::factory()->for($author)->for($category)->create();
     $library = Library::factory()->create();
     $copy = Copie::factory()->for($book)->for($library)->create();
+    $reserveCopy = Copie::factory()->for($book)->for($library)->available()->create();
     $borrow = Borrow::factory()->for($user)->for($copy, 'copy')->create();
-    $reserve = Reserve::factory()->for($user)->for($copy, 'copy')->create();
+    $reserve = Reserve::factory()->for($user)->for($reserveCopy, 'copy')->create();
     $favorite = Favorite::factory()->for($user)->for($book)->create();
 
     $this->assertModelExists($borrow);
@@ -35,9 +42,43 @@ it('creates every library model with its factory and persists its required relat
         ->and($borrow->user->is($user))->toBeTrue()
         ->and($borrow->copy->is($copy))->toBeTrue()
         ->and($reserve->user->is($user))->toBeTrue()
-        ->and($reserve->copy->is($copy))->toBeTrue()
+        ->and($reserve->copy->is($reserveCopy))->toBeTrue()
         ->and($favorite->user->is($user))->toBeTrue()
         ->and($favorite->book->is($book))->toBeTrue();
+});
+
+it('sets a reservation start date and expiration date 24 hours apart', function () {
+    $this->freezeTime();
+
+    $reserve = Reserve::factory()->create();
+    $reserve->refresh();
+
+    expect($reserve->start_date->toDateTimeString())->toBe(now()->toDateTimeString())
+        ->and($reserve->expiration_date->toDateTimeString())->toBe(now()->addHours(24)->toDateTimeString());
+});
+
+it('marks a copy reserved when a reservation starts and available when it expires', function () {
+    $this->travelTo('2026-11-06 11:59:00');
+
+    $copy = Copie::factory()->available()->create();
+    Reserve::factory()
+        ->for($copy, 'copy')
+        ->create([
+            'start_date' => '2026-11-06 12:00:00',
+            'expiration_date' => '2026-11-07 12:00:00',
+        ]);
+
+    expect($copy->fresh()->copyStatus->name)->toBe('Available');
+
+    $this->travelTo('2026-11-06 12:00:00');
+    $this->artisan('copies:sync-availability')->assertSuccessful();
+
+    expect($copy->fresh()->copyStatus->name)->toBe('Reserved');
+
+    $this->travelTo('2026-11-07 12:00:00');
+    $this->artisan('copies:sync-availability')->assertSuccessful();
+
+    expect($copy->fresh()->copyStatus->name)->toBe('Available');
 });
 
 it('returns all books from their one-to-many category and author relationships', function () {
@@ -64,16 +105,117 @@ it('manages the many-to-many favorites relationship from either model', function
         ->and($book->fresh()->favoritedBy->modelKeys())->toBe([$user->id]);
 });
 
-it('stores and updates the deadline on the borrowed-copies pivot', function () {
+it('keeps multiple loans in the borrow history and renews the selected loan', function () {
+    $this->travelTo('2026-10-28 12:00:00');
+
     $user = User::factory()->create();
-    $copy = Copie::factory()->create();
+    $copy = Copie::factory()->available()->create();
+    $firstBorrow = Borrow::factory()
+        ->for($user)
+        ->for($copy, 'copy')
+        ->create(['deadline' => '2026-11-01']);
 
-    $user->borrowedCopies()->attach($copy, ['deadline' => '2026-11-01']);
+    $firstBorrow->markAsReturned();
 
-    expect(Carbon::parse($user->fresh()->borrowedCopies->first()->pivot->deadline)->toDateString())->toBe('2026-11-01');
+    $secondBorrow = Borrow::factory()
+        ->for($user)
+        ->for($copy, 'copy')
+        ->create(['deadline' => '2026-11-07']);
+    $secondBorrow->renewUntil(new DateTimeImmutable('2026-11-15'));
 
-    $user->borrowedCopies()->updateExistingPivot($copy->id, ['deadline' => '2026-11-15']);
+    expect($user->fresh()->borrows->modelKeys())->toBe([$firstBorrow->id, $secondBorrow->id])
+        ->and($copy->fresh()->borrows->modelKeys())->toBe([$firstBorrow->id, $secondBorrow->id])
+        ->and($firstBorrow->fresh()->deadline->toDateString())->toBe('2026-11-01')
+        ->and($firstBorrow->fresh()->returned_at)->not->toBeNull()
+        ->and($secondBorrow->fresh()->deadline->toDateString())->toBe('2026-11-15')
+        ->and($secondBorrow->fresh()->returned_at)->toBeNull();
+});
 
-    expect(Carbon::parse($user->fresh()->borrowedCopies->first()->pivot->deadline)->toDateString())->toBe('2026-11-15')
-        ->and(Carbon::parse(Borrow::where('user_id', $user->id)->where('copy_id', $copy->id)->value('deadline'))->toDateString())->toBe('2026-11-15');
+it('rejects a loan deadline that is today or in the past', function (string $deadline) {
+    $this->travelTo('2026-11-01 12:00:00');
+
+    expect(fn () => Borrow::factory()->create(['deadline' => $deadline]))
+        ->toThrow(ValidationException::class);
+
+    $this->assertDatabaseCount('borrows', 0);
+})->with(['2026-11-01', '2026-10-31']);
+
+it('allows an overdue loan to be returned', function () {
+    $this->travelTo('2026-10-01 12:00:00');
+    $borrow = Borrow::factory()->create(['deadline' => '2026-10-02']);
+
+    $this->travelTo('2026-10-03 12:00:00');
+    $borrow->markAsReturned();
+
+    expect($borrow->fresh()->returned_at->toDateTimeString())->toBe('2026-10-03 12:00:00');
+});
+
+it('rejects a second active loan for a copy', function () {
+    $copy = Copie::factory()->available()->create();
+    Borrow::factory()->for($copy, 'copy')->create();
+
+    expect(fn () => Borrow::factory()->for($copy, 'copy')->create())
+        ->toThrow(ValidationException::class);
+
+    $this->assertDatabaseCount('borrows', 1);
+});
+
+it('preserves loan history when deleting its user or copy', function () {
+    $borrow = Borrow::factory()->create();
+    $borrow->markAsReturned();
+
+    expect(fn () => $borrow->user->delete())
+        ->toThrow(QueryException::class);
+
+    expect(fn () => $borrow->copy->delete())
+        ->toThrow(QueryException::class);
+
+    $this->assertDatabaseCount('borrows', 1);
+});
+
+it('preserves reservation history when deleting its user or copy', function () {
+    $reserve = Reserve::factory()->create();
+
+    expect(fn () => $reserve->user->delete())
+        ->toThrow(QueryException::class);
+
+    expect(fn () => $reserve->copy->delete())
+        ->toThrow(QueryException::class);
+
+    $this->assertDatabaseCount('reserves', 1);
+});
+
+it('seeds each copy in only one coherent availability state', function () {
+    Book::factory(6)->create();
+    Library::factory()->create();
+    User::factory()->create();
+
+    $this->seed([
+        CopyStatusSeeder::class,
+        BorrowStatusSeeder::class,
+        CopieSeeder::class,
+        BorrowSeeder::class,
+        ReserveSeeder::class,
+    ]);
+
+    $copies = Copie::query()->with('copyStatus')->get();
+
+    foreach ($copies as $copy) {
+        $hasActiveBorrow = $copy->borrows()->whereNull('returned_at')->exists();
+        $hasActiveReservation = $copy->reserves()
+            ->where('start_date', '<=', now())
+            ->where('expiration_date', '>', now())
+            ->exists();
+
+        expect([$copy->copyStatus->name, $hasActiveBorrow, $hasActiveReservation])->toBeIn([
+            ['Borrowed', true, false],
+            ['Reserved', false, true],
+            ['Available', false, false],
+        ]);
+    }
+
+    $this->seed([BorrowSeeder::class, ReserveSeeder::class]);
+
+    $this->assertDatabaseCount('borrows', 2);
+    $this->assertDatabaseCount('reserves', 2);
 });

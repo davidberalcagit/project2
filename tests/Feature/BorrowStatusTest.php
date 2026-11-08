@@ -12,20 +12,18 @@ it('seeds the supported borrow statuses in English', function () {
     $this->seed(BorrowStatusSeeder::class);
     $this->seed(BorrowStatusSeeder::class);
 
-    $this->assertDatabaseCount('borrow_statuses', 5);
+    $this->assertDatabaseCount('borrow_statuses', 3);
 
     expect(BorrowStatus::query()->orderBy('id')->pluck('name')->all())->toBe([
-        'Available',
-        'Reserved',
-        'Borrowed',
-        'Expired',
-        'Unavailable',
+        'Active',
+        'Returned',
+        'Overdue',
     ]);
 });
 
 it('associates a borrow with its status through factories', function () {
     $borrow = Borrow::factory()->create();
 
-    expect($borrow->borrowStatus->name)->toBeIn(BorrowStatus::query()->pluck('name')->all())
+    expect($borrow->borrowStatus->name)->toBe('Active')
         ->and($borrow->borrowStatus->borrows->modelKeys())->toBe([$borrow->id]);
 });

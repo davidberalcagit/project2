@@ -59,13 +59,6 @@ class User extends Authenticatable
         return $this->hasMany(Borrow::class);
     }
 
-    public function borrowedCopies(): BelongsToMany
-    {
-        return $this->belongsToMany(Copie::class, 'borrows', 'user_id', 'copy_id')
-            ->withPivot('deadline')
-            ->withTimestamps();
-    }
-
     public function favorites(): HasMany
     {
         return $this->hasMany(Favorite::class);

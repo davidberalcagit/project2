@@ -24,9 +24,7 @@ class BorrowFactory extends Factory
             'user_id' => User::factory(),
             'copy_id' => Copie::factory(),
             'borrow_status_id' => fn (): int => BorrowStatus::query()
-                ->firstOrCreate([
-                    'name' => fake()->randomElement(BorrowStatusFactory::supportedStatuses()),
-                ])
+                ->firstOrCreate(['name' => 'Active'])
                 ->getKey(),
             'deadline' => fake()->dateTimeBetween('+1 week', '+1 month')->format('Y-m-d'),
         ];

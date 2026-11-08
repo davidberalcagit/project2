@@ -19,5 +19,26 @@
 
     @if ($library)
         <x-library-copies :copies="$library->copies" />
+
+        <x-card>
+            <h2>Préstamos activos</h2>
+            @forelse ($activeBorrows as $borrow)
+                <article>
+                    <h3>{{ $borrow->copy->book->title }}</h3>
+                    <p>Usuario: {{ $borrow->user->name }}</p>
+                    <p>Estado: {{ $borrow->borrowStatus->name }}</p>
+                    <p>Prestado: {{ $borrow->loaned_at->format('d/m/Y H:i') }}</p>
+                    <p>Fecha límite: {{ $borrow->deadline->format('d/m/Y') }}</p>
+                    @can('complete-borrows')
+                        <form method="POST" action="{{ route('librarian.borrows.complete', $borrow) }}">
+                            @csrf
+                            <button type="submit">Registrar devolución</button>
+                        </form>
+                    @endcan
+                </article>
+            @empty
+                <p class="muted">No hay préstamos activos en esta biblioteca.</p>
+            @endforelse
+        </x-card>
     @endif
 </x-app-layout>

@@ -11,10 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('reserves', function(Blueprint $table){
+        Schema::create('reserves', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('copy_id')->constrained('copies')->onDelete('cascade');
-            $table->foreignId("user_id")->constrained('users')->onDelete('cascade');
+            $table->foreignId('copy_id')->constrained('copies')->restrictOnDelete();
+            $table->foreignId('user_id')->constrained('users')->restrictOnDelete();
+            $table->dateTime('start_date');
+            $table->dateTime('expiration_date');
             $table->timestamps();
         });
     }

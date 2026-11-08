@@ -33,9 +33,7 @@ class CopieFactory extends Factory
             'book_id' => Book::factory(),
             'library_id' => Library::factory(),
             'copy_status_id' => fn (): int => CopyStatus::query()
-                ->firstOrCreate([
-                    'name' => fake()->randomElement(CopyStatusFactory::supportedStatuses()),
-                ])
+                ->firstOrCreate(['name' => 'Available'])
                 ->getKey(),
             'barcode' => fake()->unique()->numerify('LIB-########'),
         ];

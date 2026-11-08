@@ -30,21 +30,6 @@
                 @enderror
             </div>
 
-            <div>
-                <x-label for="copy_status_id">Estado</x-label>
-                <x-select id="copy_status_id" name="copy_status_id" required>
-                    <option value="">Selecciona un estado</option>
-                    @foreach ($copyStatuses as $copyStatus)
-                        <option value="{{ $copyStatus->id }}" @selected(old('copy_status_id') == $copyStatus->id)>
-                            {{ $copyStatus->name }}
-                        </option>
-                    @endforeach
-                </x-select>
-                @error('copy_status_id')
-                    <p class="form-error">{{ $message }}</p>
-                @enderror
-            </div>
-
             <button class="auth-submit" type="submit">Guardar ejemplar</button>
         </form>
     </x-card>

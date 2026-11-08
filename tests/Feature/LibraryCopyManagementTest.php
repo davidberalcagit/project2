@@ -21,19 +21,20 @@ it('allows librarians to create a copy in their assigned library', function (): 
     $book = Book::factory()->create(['title' => 'El nombre del viento']);
     $library = Library::factory()->create(['name' => 'Biblioteca Central']);
     $librarian->library()->associate($library)->save();
-    $status = CopyStatus::factory()->create(['name' => 'Available']);
+    $borrowedStatus = CopyStatus::factory()->create(['name' => 'Borrowed']);
 
     $this->actingAs($librarian)
         ->get(route('librarian.copies.create'))
         ->assertOk()
         ->assertSee('El nombre del viento')
-        ->assertDontSee('name="library_id"');
+        ->assertDontSee('name="library_id"')
+        ->assertDontSee('name="copy_status_id"');
 
     $this->actingAs($librarian)
         ->post(route('librarian.copies.store'), [
             'book_id' => $book->id,
             'barcode' => 'LIB-00000001',
-            'copy_status_id' => $status->id,
+            'copy_status_id' => $borrowedStatus->id,
             'library_id' => Library::factory()->create()->id,
         ])
         ->assertRedirect(route('librarian.dashboard'))
@@ -43,7 +44,7 @@ it('allows librarians to create a copy in their assigned library', function (): 
         'book_id' => $book->id,
         'library_id' => $library->id,
         'barcode' => 'LIB-00000001',
-        'copy_status_id' => $status->id,
+        'copy_status_id' => CopyStatus::query()->where('name', 'Available')->value('id'),
     ]);
 });
 
@@ -53,14 +54,12 @@ it('rejects duplicate copy barcodes without creating another copy', function ():
     $librarian->library()->associate(Library::factory()->create())->save();
     $copy = Copie::factory()->create(['barcode' => 'LIB-00000001']);
     $book = Book::factory()->create();
-    $status = CopyStatus::factory()->create();
 
     $this->actingAs($librarian)
         ->from(route('librarian.copies.create'))
         ->post(route('librarian.copies.store'), [
             'book_id' => $book->id,
             'barcode' => $copy->barcode,
-            'copy_status_id' => $status->id,
         ])
         ->assertRedirect(route('librarian.copies.create'))
         ->assertSessionHasErrors('barcode');
@@ -121,7 +120,6 @@ it('prevents librarians without an assigned library from creating copies', funct
         ->post(route('librarian.copies.store'), [
             'book_id' => Book::factory()->create()->id,
             'barcode' => 'LIB-00000001',
-            'copy_status_id' => CopyStatus::factory()->create()->id,
         ])
         ->assertForbidden();
 

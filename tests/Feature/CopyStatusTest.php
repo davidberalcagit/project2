@@ -29,13 +29,7 @@ it('seeds the supported copy statuses in English', function () {
 it('associates a copy with its status through factories', function () {
     $copy = Copie::factory()->create();
 
-    expect($copy->copyStatus->name)->toBeIn([
-        'Available',
-        'Reserved',
-        'Borrowed',
-        'Expired',
-        'Unavailable',
-    ])
+    expect($copy->copyStatus->name)->toBe('Available')
         ->and($copy->copyStatus->copies->modelKeys())->toBe([$copy->id]);
 });
 
