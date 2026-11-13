@@ -19,7 +19,10 @@ class LibraryController extends Controller
 
     public function show(Library $library): View
     {
-        $library->load('copies.book');
+        $library->load([
+            'copies.copyStatus',
+            'copies.book' => fn ($query) => $query->withAvg('opinions', 'rating'),
+        ]);
 
         return view('libraries.show', compact('library'));
     }

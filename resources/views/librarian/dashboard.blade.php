@@ -22,6 +22,17 @@
 
         <x-card>
             <h2>Préstamos activos</h2>
+            <form method="GET" action="{{ route('librarian.dashboard') }}">
+                <label class="form-label" for="loan_filter">Mostrar</label>
+                <x-select id="loan_filter" name="loan_filter">
+                    <option value="active" @selected($loanFilter === 'active')>Todos los préstamos activos</option>
+                    <option value="overdue" @selected($loanFilter === 'overdue')>Solo vencidos</option>
+                </x-select>
+                @error('loan_filter')
+                    <p class="form-error" role="alert">{{ $message }}</p>
+                @enderror
+                <button type="submit">Filtrar</button>
+            </form>
             @forelse ($activeBorrows as $borrow)
                 <article>
                     <h3>{{ $borrow->copy->book->title }}</h3>
@@ -37,7 +48,9 @@
                     @endcan
                 </article>
             @empty
-                <p class="muted">No hay préstamos activos en esta biblioteca.</p>
+                <p class="muted">
+                    {{ $loanFilter === 'overdue' ? 'No hay préstamos vencidos en esta biblioteca.' : 'No hay préstamos activos en esta biblioteca.' }}
+                </p>
             @endforelse
         </x-card>
     @endif

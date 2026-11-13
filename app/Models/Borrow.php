@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use DateTimeInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -30,6 +31,22 @@ class Borrow extends Model
             'deadline' => 'date',
             'returned_at' => 'datetime',
         ];
+    }
+
+    public function scopeActive(Builder $query): Builder
+    {
+        return $query->whereNull('returned_at');
+    }
+
+    public function scopeOverdue(Builder $query): Builder
+    {
+        return $query->whereNull('returned_at')
+            ->whereDate('deadline', '<', today());
+    }
+
+    public function scopeForUser(Builder $query, int $userId): Builder
+    {
+        return $query->where('user_id', $userId);
     }
 
     protected static function booted(): void

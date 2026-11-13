@@ -13,9 +13,9 @@ class LibrarySeeder extends Seeder
      */
     public function run(): void
     {
-        $libraryCount = Book::query()->count();
+        $missingLibraries = Book::query()->count() - Library::query()->count();
 
-        for ($libraryNumber = 0; $libraryNumber < $libraryCount; $libraryNumber++) {
+        for ($libraryNumber = 0; $libraryNumber < $missingLibraries; $libraryNumber++) {
             Library::factory()->create([
                 'name' => fake()->name,
                 'location' => fake()->city(),

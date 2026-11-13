@@ -24,4 +24,23 @@
             <p><a class="content-link" href="{{ route('support.books.create') }}">Crear libro</a></p>
         @endif
     </x-card>
+    <x-card>
+        <h2>Mis préstamos recientes</h2>
+        @forelse ($borrows as $borrow)
+            <article>
+                <h3>
+                    <a class="content-link" href="{{ route('books.show', $borrow->copy->book) }}">
+                        {{ $borrow->copy->book->title }}
+                    </a>
+                </h3>
+                <p>Estado: {{ $borrow->borrowStatus->name }}</p>
+                <p>Fecha límite: {{ $borrow->deadline->format('d/m/Y') }}</p>
+                @if ($borrow->returned_at)
+                    <p>Devuelto: {{ $borrow->returned_at->format('d/m/Y H:i') }}</p>
+                @endif
+            </article>
+        @empty
+            <p class="muted">Todavía no tienes préstamos registrados.</p>
+        @endforelse
+    </x-card>
 </x-app-layout>

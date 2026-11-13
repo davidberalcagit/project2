@@ -9,11 +9,14 @@ use App\Models\Book;
 use App\Models\Category;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 
 class BookController extends Controller
 {
     public function create(): View
     {
+        Gate::authorize('create', Book::class);
+
         $authors = Author::query()->orderBy('name')->get();
         $categories = Category::query()->orderBy('name')->get();
 

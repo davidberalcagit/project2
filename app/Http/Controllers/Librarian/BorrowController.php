@@ -4,21 +4,19 @@ namespace App\Http\Controllers\Librarian;
 
 use App\Http\Controllers\Controller;
 use App\Models\Borrow;
+use App\Services\BorrowWorkflowService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class BorrowController extends Controller
 {
-    public function complete(Request $request, Borrow $borrow): RedirectResponse
-    {
-        $user = $request->user();
-        $canManageAllLibraries = $user->can('manage-users') || $user->hasRole('Internos');
-        $canManageOwnLibrary = $user->library_id !== null
-            && $borrow->copy->library_id === $user->library_id;
+    public function complete(
+        Borrow $borrow,
+        BorrowWorkflowService $borrowWorkflow,
+    ): RedirectResponse {
+        abort_unless(Gate::allows('complete', $borrow), 404);
 
-        abort_unless($canManageAllLibraries || $canManageOwnLibrary, 404);
-
-        $borrow->markAsReturned();
+        $borrowWorkflow->markAsReturned($borrow);
 
         return to_route('librarian.dashboard')
             ->with('status', 'La devolución del préstamo se ha registrado.');

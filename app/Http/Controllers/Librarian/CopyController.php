@@ -8,13 +8,13 @@ use App\Models\Book;
 use App\Models\Copie;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 
 class CopyController extends Controller
 {
-    public function create(Request $request): View
+    public function create(): View
     {
-        abort_unless($request->user()->library_id !== null, 403);
+        Gate::authorize('create', Copie::class);
 
         $books = Book::query()->orderBy('title')->get();
 

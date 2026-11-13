@@ -17,6 +17,10 @@
                     <p class="muted">
                         {{ $book->author?->name ?? 'Autor por descubrir' }}@if ($book->publication_date) · {{ $book->publication_date->format('Y') }}@endif
                     </p>
+                    <p class="muted">
+                        Valoración media:
+                        {{ $book->opinions_avg_rating !== null ? number_format((float) $book->opinions_avg_rating, 1).' / 5' : 'Sin valoraciones' }}
+                    </p>
                 </x-card>
             @empty
                 <x-card>
