@@ -39,13 +39,17 @@ it('seeds each existing book as an available copy in an existing library', funct
 
     $this->seed(CopieSeeder::class);
 
-    $this->assertDatabaseCount('copies', 1);
+    $this->assertDatabaseCount('copies', 3);
 
-    $copy = Copie::query()->firstOrFail();
+    $copies = Copie::query()->with(['book', 'library', 'copyStatus'])->get();
 
-    expect($copy->book->is($book))->toBeTrue()
-        ->and($copy->library->is($library))->toBeTrue()
-        ->and($copy->copyStatus->name)->toBe('Available');
+    expect($copies)->toHaveCount(3);
+
+    foreach ($copies as $copy) {
+        expect($copy->book->is($book))->toBeTrue()
+            ->and($copy->library->is($library))->toBeTrue()
+            ->and($copy->copyStatus->name)->toBe('Available');
+    }
 });
 
 it('reuses one available status for all copies', function () {

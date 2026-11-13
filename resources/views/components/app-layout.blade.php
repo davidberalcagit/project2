@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{{ $title }}</title>
     <link rel="icon" type="image/png" href="{{ asset('storage/logos/favicon.png') }}">
-    @vite('resources/css/site.css')
+    <link rel="stylesheet" href="{{ asset('css/site.css') }}">
 </head>
 <body class="site-layout">
     <header class="site-shell site-header">
