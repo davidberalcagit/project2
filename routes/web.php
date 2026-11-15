@@ -11,16 +11,13 @@ use App\Http\Controllers\LibrarianAccessRequestController;
 use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\Support\BookController as SupportBookController;
 use App\Http\Controllers\Support\LibrarianAccessRequestController as SupportLibrarianAccessRequestController;
-use App\Models\Book;
+use App\Services\BookCatalogService;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Facades\Route;
 
 // Zona pública: página principal y consulta del catálogo.
-Route::get('/', function () {
-    $books = Book::query()
-        ->with(['author', 'category'])
-        ->latest()
-        ->take(6)
-        ->get();
+Route::get('/', function (BookCatalogService $bookCatalog): View {
+    $books = $bookCatalog->featured();
 
     return view('home', compact('books'));
 })->name('home');

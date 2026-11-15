@@ -13,6 +13,7 @@ use Database\Seeders\BorrowSeeder;
 use Database\Seeders\BorrowStatusSeeder;
 use Database\Seeders\CopieSeeder;
 use Database\Seeders\CopyStatusSeeder;
+use Database\Seeders\LibrarySeeder;
 use Database\Seeders\ReserveSeeder;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\LazilyRefreshDatabase;
@@ -58,7 +59,7 @@ it('sets a reservation start date and expiration date 24 hours apart', function 
 });
 
 it('marks a copy reserved when a reservation starts and available when it expires', function () {
-    $this->travelTo('2026-11-06 11:59:00');
+    $this->travelTo(new \DateTimeImmutable('2026-11-06 11:59:00'));
 
     $copy = Copie::factory()->available()->create();
     Reserve::factory()
@@ -70,12 +71,12 @@ it('marks a copy reserved when a reservation starts and available when it expire
 
     expect($copy->fresh()->copyStatus->name)->toBe('Available');
 
-    $this->travelTo('2026-11-06 12:00:00');
+    $this->travelTo(new \DateTimeImmutable('2026-11-06 12:00:00'));
     $this->artisan('copies:sync-availability')->assertSuccessful();
 
     expect($copy->fresh()->copyStatus->name)->toBe('Reserved');
 
-    $this->travelTo('2026-11-07 12:00:00');
+    $this->travelTo(new \DateTimeImmutable('2026-11-07 12:00:00'));
     $this->artisan('copies:sync-availability')->assertSuccessful();
 
     expect($copy->fresh()->copyStatus->name)->toBe('Available');
@@ -106,7 +107,7 @@ it('manages the many-to-many favorites relationship from either model', function
 });
 
 it('keeps multiple loans in the borrow history and renews the selected loan', function () {
-    $this->travelTo('2026-10-28 12:00:00');
+    $this->travelTo(new \DateTimeImmutable('2026-10-28 12:00:00'));
 
     $user = User::factory()->create();
     $copy = Copie::factory()->available()->create();
@@ -132,7 +133,7 @@ it('keeps multiple loans in the borrow history and renews the selected loan', fu
 });
 
 it('rejects a loan deadline that is today or in the past', function (string $deadline) {
-    $this->travelTo('2026-11-01 12:00:00');
+    $this->travelTo(new \DateTimeImmutable('2026-11-01 12:00:00'));
 
     expect(fn () => Borrow::factory()->create(['deadline' => $deadline]))
         ->toThrow(ValidationException::class);
@@ -141,10 +142,10 @@ it('rejects a loan deadline that is today or in the past', function (string $dea
 })->with(['2026-11-01', '2026-10-31']);
 
 it('allows an overdue loan to be returned', function () {
-    $this->travelTo('2026-10-01 12:00:00');
+    $this->travelTo(new \DateTimeImmutable('2026-10-01 12:00:00'));
     $borrow = Borrow::factory()->create(['deadline' => '2026-10-02']);
 
-    $this->travelTo('2026-10-03 12:00:00');
+    $this->travelTo(new \DateTimeImmutable('2026-10-03 12:00:00'));
     $borrow->markAsReturned();
 
     expect($borrow->fresh()->returned_at->toDateTimeString())->toBe('2026-10-03 12:00:00');
@@ -216,6 +217,26 @@ it('seeds each copy in only one coherent availability state', function () {
 
     $this->seed([BorrowSeeder::class, ReserveSeeder::class]);
 
-    $this->assertDatabaseCount('borrows', 2);
-    $this->assertDatabaseCount('reserves', 2);
+    $this->assertDatabaseCount('borrows', 6);
+    $this->assertDatabaseCount('reserves', 4);
+});
+
+it('distributes seeded copies across every library and can run repeatedly', function () {
+    Book::factory(3)->create();
+    $this->seed(LibrarySeeder::class);
+    $this->seed(LibrarySeeder::class);
+    Library::factory(7)->create();
+
+    $this->seed(CopyStatusSeeder::class);
+    $this->seed(CopieSeeder::class);
+
+    expect(Library::query()->withCount('copies')->orderBy('id')->get()->pluck('copies_count')->all())->toBe(array_fill(0, 10, 1));
+    expect(Book::query()->withCount('copies')->orderBy('id')->get()->pluck('copies_count')->all())->toBe([4, 3, 3]);
+
+    $initialCopiesCount = Copie::query()->count();
+    $this->seed(CopieSeeder::class);
+
+    expect(Copie::query()->count())->toBe($initialCopiesCount)
+        ->and(Library::query()->withCount('copies')->orderBy('id')->get()->pluck('copies_count')->all())->toBe(array_fill(0, 10, 1))
+        ->and(Book::query()->withCount('copies')->orderBy('id')->get()->pluck('copies_count')->all())->toBe([4, 3, 3]);
 });

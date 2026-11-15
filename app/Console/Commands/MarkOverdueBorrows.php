@@ -2,12 +2,10 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Borrow;
-use App\Models\BorrowStatus;
+use App\Services\BorrowWorkflowService;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
-use Illuminate\Database\Eloquent\Collection;
 
 #[Signature('borrows:mark-overdue')]
 #[Description('Mark active loans past their deadline as overdue')]
@@ -16,26 +14,9 @@ class MarkOverdueBorrows extends Command
     /**
      * Execute the console command.
      */
-    public function handle(): int
+    public function handle(BorrowWorkflowService $borrowWorkflow): int
     {
-        $overdueStatusId = BorrowStatus::query()
-            ->where('name', 'Overdue')
-            ->firstOrFail()
-            ->getKey();
-        $updatedBorrowCount = 0;
-
-        Borrow::query()
-            ->whereNull('returned_at')
-            ->whereDate('deadline', '<', today()->toDateString())
-            ->where('borrow_status_id', '!=', $overdueStatusId)
-            ->orderBy('id')
-            ->chunkById(100, function (Collection $borrows) use (&$updatedBorrowCount): void {
-                foreach ($borrows as $borrow) {
-                    if ($borrow->markAsOverdue()) {
-                        $updatedBorrowCount++;
-                    }
-                }
-            });
+        $updatedBorrowCount = $borrowWorkflow->markOverdueBorrows();
 
         $this->info("Updated {$updatedBorrowCount} overdue loan(s).");
 

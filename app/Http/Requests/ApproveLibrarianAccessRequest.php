@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\LibrarianAccessRequest as LibrarianAccessRequestModel;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -9,7 +10,10 @@ class ApproveLibrarianAccessRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('manage-users') ?? false;
+        $accessRequest = $this->route('librarianAccessRequest');
+
+        return $accessRequest instanceof LibrarianAccessRequestModel
+            && ($this->user()?->can('approve', $accessRequest) ?? false);
     }
 
     public function rules(): array

@@ -14,7 +14,7 @@ class OpinionSeeder extends Seeder
      */
     public function run(): void
     {
-        $missingUsers = 5 - User::query()->count();
+        $missingUsers = 2 - User::query()->count();
 
         if ($missingUsers > 0) {
             User::factory($missingUsers)->create();
@@ -26,22 +26,40 @@ class OpinionSeeder extends Seeder
             Book::factory($missingBooks)->create();
         }
 
-        $books = Book::query()->orderBy('id')->take(5)->get();
+        $books = Book::query()->orderBy('id')->get();
 
-        foreach ($books as $index => $book) {
-            $user = User::query()->orderBy('id')->skip($index)->firstOrFail();
-            $rating = $index + 1;
+        foreach ($books as $book) {
+            $missingOpinions = 2 - $book->opinions()->count();
 
-            Opinion::query()->firstOrCreate(
-                [
-                    'user_id' => $user->id,
-                    'book_id' => $book->id,
-                ],
-                [
-                    'rating' => $rating,
-                    'comment' => "Opinion de ejemplo {$rating}.",
-                ],
-            );
+            if ($missingOpinions <= 0) {
+                continue;
+            }
+
+            $reviewers = User::query()
+                ->whereDoesntHave('opinions', fn ($query) => $query->where('book_id', $book->id))
+                ->take($missingOpinions)
+                ->get();
+
+            if ($reviewers->count() < $missingOpinions) {
+                $reviewers = $reviewers->concat(
+                    User::factory($missingOpinions - $reviewers->count())->create(),
+                );
+            }
+
+            foreach ($reviewers as $index => $reviewer) {
+                $rating = fake()->numberBetween(1, 5);
+
+                Opinion::query()->firstOrCreate(
+                    [
+                        'user_id' => $reviewer->id,
+                        'book_id' => $book->id,
+                    ],
+                    [
+                        'rating' => $rating,
+                        'comment' => "Opinion de ejemplo {$rating}.",
+                    ],
+                );
+            }
         }
     }
 }

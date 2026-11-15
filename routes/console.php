@@ -12,6 +12,10 @@ Schedule::command('borrows:mark-overdue')
     ->dailyAt('00:01')
     ->withoutOverlapping(30);
 
+Schedule::command('borrows:daily-closing')
+    ->dailyAt('23:55')
+    ->withoutOverlapping(30);
+
 Schedule::command('copies:sync-availability')
     ->everyMinute()
     ->withoutOverlapping(30);

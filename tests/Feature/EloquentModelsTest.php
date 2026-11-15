@@ -141,12 +141,31 @@ it('rejects opinion ratings outside the range of one to five', function (int $ra
     $this->assertDatabaseCount('opinions', 0);
 })->with([0, 6]);
 
-it('seeds five opinions', function () {
-    $existingOpinions = Opinion::count();
+it('seeds two opinions for every book idempotently', function () {
+    Book::factory(7)->create();
+    User::factory(2)->create();
+
+    $this->seed(OpinionSeeder::class);
+    $initialOpinionCount = Opinion::count();
+    $this->seed(OpinionSeeder::class);
+
+    expect(Book::query()->withCount('opinions')->get()->pluck('opinions_count')->unique()->all())->toBe([2])
+        ->and(Opinion::count())->toBe($initialOpinionCount);
+});
+
+it('preserves existing opinions while filling each book to two', function () {
+    $books = Book::factory(2)->create();
+    $reviewer = User::factory()->create();
+    Opinion::factory()->for($books->first())->for($reviewer)->create([
+        'rating' => 3,
+        'comment' => 'Valoración existente.',
+    ]);
 
     $this->seed(OpinionSeeder::class);
 
-    $this->assertDatabaseCount('opinions', $existingOpinions + 5);
+    expect($books->first()->opinions()->count())->toBe(2)
+        ->and($books->first()->opinions()->where('comment', 'Valoración existente.')->value('rating'))->toBe(3)
+        ->and($books->last()->opinions()->count())->toBe(2);
 });
 
 it('seeds categories, authors, books, and favorites', function () {

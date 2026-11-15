@@ -2,14 +2,14 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Copie;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreCopyRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return ($this->user()?->can('manage-copies') ?? false)
-            && $this->user()?->library_id !== null;
+        return $this->user()?->can('create', Copie::class) ?? false;
     }
 
     public function rules(): array
