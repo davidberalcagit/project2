@@ -29,13 +29,15 @@ class BorrowSeeder extends Seeder
 
         $user = User::query()->orderBy('id')->firstOrFail();
         $borrowCount = (int) ceil($availableCopies->count() / 3);
+        $loanedAt = now()->subDays(7);
+        $deadline = $loanedAt->copy()->addDays(15)->toDateString();
 
         foreach ($availableCopies->take($borrowCount) as $copy) {
             Borrow::query()->create([
                 'copy_id' => $copy->id,
                 'user_id' => $user->id,
-                'loaned_at' => '2026-11-06 12:00:00',
-                'deadline' => '2026-11-21',
+                'loaned_at' => $loanedAt,
+                'deadline' => $deadline,
             ]);
         }
     }

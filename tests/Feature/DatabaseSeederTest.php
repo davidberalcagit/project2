@@ -9,12 +9,13 @@ use App\Models\Library;
 use App\Models\Opinion;
 use App\Models\Reserve;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 uses(TestCase::class);
 
 it('rebuilds the same complete database with migrate fresh and DatabaseSeeder', function () {
-    $this->travelTo(new \DateTimeImmutable('2026-11-06 12:00:00'));
+    $this->travelTo(new DateTimeImmutable('2026-11-25 12:00:00'));
 
     $seedAndSnapshot = function (): array {
         $this->artisan('migrate:fresh', ['--seed' => true, '--force' => true])
@@ -63,6 +64,10 @@ it('rebuilds the same complete database with migrate fresh and DatabaseSeeder', 
         ->and(collect($firstSnapshot['libraries'])->every(fn (array $library): bool => $library[1] === 3))->toBeTrue()
         ->and(count($firstSnapshot['copies']))->toBe(42)
         ->and(count($firstSnapshot['borrows']))->toBe(14)
+        ->and(collect($firstSnapshot['borrows'])->every(
+            fn (array $borrow): bool => Carbon::parse($borrow['deadline'])->isAfter('2026-11-25')
+                && Carbon::parse($borrow['loaned_at'])->isBefore('2026-11-25'),
+        ))->toBeTrue()
         ->and(count($firstSnapshot['reserves']))->toBe(10)
         ->and(count($firstSnapshot['opinions']))->toBe(28)
         ->and(collect($firstSnapshot['opinions'])->every(fn (array $opinion): bool => $opinion['rating'] >= 1 && $opinion['rating'] <= 5))->toBeTrue()
