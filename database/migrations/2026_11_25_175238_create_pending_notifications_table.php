@@ -1,0 +1,34 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('pending_notifications', function (Blueprint $table) {
+            $table->id();
+            $table->string('notification_type');
+            $table->string('deduplication_key')->unique();
+            $table->foreignId('user_id')->constrained()->restrictOnDelete();
+            $table->foreignId('borrow_id')->nullable()->constrained()->restrictOnDelete();
+            $table->foreignId('reserve_id')->nullable()->constrained()->restrictOnDelete();
+            $table->string('status')->default('pending');
+            $table->index(['status', 'notification_type']);
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('pending_notifications');
+    }
+};

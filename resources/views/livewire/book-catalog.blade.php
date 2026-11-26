@@ -1,0 +1,105 @@
+<div>
+    <x-card class="book-filter-card">
+        <style>
+            .book-filter-heading { margin: 0 0 4px; font-size: 24px; }
+            .book-filter-description { margin-bottom: 20px; }
+            .book-filter-grid {
+                display: grid;
+                grid-template-columns: repeat(3, minmax(0, 1fr));
+                gap: 16px;
+                align-items: end;
+            }
+            .book-filter-search { grid-column: 1 / -1; }
+            .book-filter-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+            .book-filter-reset { color: #264b3c; font-weight: 600; }
+            @media (max-width: 700px) {
+                .book-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+                .book-filter-sort { grid-column: 1 / -1; }
+            }
+            @media (max-width: 480px) {
+                .book-filter-grid { grid-template-columns: 1fr; }
+                .book-filter-search, .book-filter-sort { grid-column: auto; }
+            }
+        </style>
+        <h2 class="book-filter-heading">Encuentra tu próxima lectura</h2>
+        <p class="muted book-filter-description">Busca por título o filtra por disponibilidad y valoración.</p>
+        <div class="book-filter-grid">
+            <div class="book-filter-search">
+                <label class="form-label" for="search">Buscar</label>
+                <x-input id="search" wire:model.live.debounce.300ms="search" placeholder="Título, editorial, autor o categoría" />
+                @error('search')
+                    <p class="form-error" role="alert">{{ $message }}</p>
+                @enderror
+            </div>
+            <div>
+                <label class="form-label" for="library_id">Biblioteca con ejemplares disponibles</label>
+                <x-select id="library_id" wire:model.live="libraryId">
+                    <option value="">Todas las bibliotecas</option>
+                    @foreach ($libraries as $library)
+                        <option value="{{ $library->id }}" wire:key="library-{{ $library->id }}">
+                            {{ $library->name }}
+                        </option>
+                    @endforeach
+                </x-select>
+                @error('libraryId')
+                    <p class="form-error" role="alert">{{ $message }}</p>
+                @enderror
+            </div>
+            <div>
+                <label class="form-label" for="min_rating">Valoración mínima</label>
+                <x-select id="min_rating" wire:model.live="minimumRating">
+                    <option value="">Cualquier valoración</option>
+                    @foreach ([1, 2, 3, 4, 5] as $rating)
+                        <option value="{{ $rating }}" wire:key="rating-{{ $rating }}">
+                            {{ $rating }} o más
+                        </option>
+                    @endforeach
+                </x-select>
+                @error('minimumRating')
+                    <p class="form-error" role="alert">{{ $message }}</p>
+                @enderror
+            </div>
+            <div class="book-filter-sort">
+                <label class="form-label" for="sort">Ordenar por</label>
+                <x-select id="sort" wire:model.live="sort">
+                    <option value="copies">Más ejemplares</option>
+                    <option value="rating">Mejor valorados</option>
+                </x-select>
+                @error('sort')
+                    <p class="form-error" role="alert">{{ $message }}</p>
+                @enderror
+            </div>
+            <div class="book-filter-actions">
+                <button class="book-filter-reset" type="button" wire:click="resetFilters">Limpiar filtros</button>
+                <span class="muted" role="status" aria-live="polite">
+                    {{ $books->total() }} libros encontrados.
+                    <span wire:loading>Actualizando resultados…</span>
+                </span>
+            </div>
+        </div>
+    </x-card>
+    <div class="book-grid">
+        @forelse ($books as $book)
+            <x-card wire:key="book-{{ $book->id }}">
+                <h3>
+                    <a class="content-link" href="{{ route('books.show', $book) }}">{{ $book->title }}</a>
+                </h3>
+                <p class="muted">{{ $book->author?->name ?? 'Sin autor' }}</p>
+                <p class="muted">{{ $book->category?->name ?? 'Sin categoría' }}</p>
+                @if (isset($book->copies_count))
+                    <p>Ejemplares físicos: {{ $book->copies_count }}</p>
+                @endif
+                @if (isset($book->favorites_count))
+                    <p>Favoritos: {{ $book->favorites_count }}</p>
+                @endif
+                <p>Valoración media: {{ $book->opinions_avg_rating !== null ? number_format((float) $book->opinions_avg_rating, 1).' / 5' : 'Sin valoraciones' }}</p>
+            </x-card>
+        @empty
+            <x-card>
+                <p class="muted">No hay libros que coincidan con los filtros seleccionados.</p>
+            </x-card>
+        @endforelse
+    </div>
+
+    {{ $books->links() }}
+</div>
